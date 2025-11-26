@@ -1,0 +1,7 @@
+## Proxy
+
+**Log Statements**
+`haproxy -db -f proxy/haproxy.cfg`
+
+**Don't Log**
+`haproxy -f proxy/haproxy.cfg`
