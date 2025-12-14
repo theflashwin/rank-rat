@@ -21,9 +21,9 @@ local function redis_get(txn, room_id)
     local sock = core.tcp()
 
     -- Timeouts (safe on localhost)
-    sock:settimeout("connect", 200)
-    sock:settimeout("receive", 200)
-    sock:settimeout("send", 200)
+    -- sock:settimeout("connect", 200)
+    -- sock:settimeout("receive", 200)
+    -- sock:settimeout("send", 200)
 
     log(txn, "[redis_get] Connecting to bridge " .. redis_host .. ":" .. redis_port)
     if not sock:connect(redis_host, redis_port) then
