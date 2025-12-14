@@ -25,9 +25,10 @@ end
 local function redis_get(room_id)
     local sock = core.tcp()
 
-    sock:settimeout("connect", 200)
-    sock:settimeout("receive", 200)
-    sock:settimeout("send", 200)
+    -- TODO: figure out why this isn't working
+    -- sock:settimeout("connect", 200)
+    -- sock:settimeout("receive", 200)
+    -- sock:settimeout("send", 200)
 
     if not sock:connect(redis_host, redis_port) then
         return nil
