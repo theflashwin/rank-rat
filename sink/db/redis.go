@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"net/url"
 	"strings"
 	"time"
 )
@@ -17,7 +18,23 @@ func NewRedisStore(addr string) *RedisStore {
 	if strings.TrimSpace(addr) == "" {
 		panic("Redis address cannot be empty")
 	}
-	return &RedisStore{Addr: addr}
+
+	// Parse connection string - handle both "redis://host:port" and "host:port" formats
+	parsedAddr := addr
+	if strings.HasPrefix(addr, "redis://") || strings.HasPrefix(addr, "rediss://") {
+		u, err := url.Parse(addr)
+		if err != nil {
+			panic(fmt.Sprintf("Invalid Redis connection string: %v", err))
+		}
+		// Extract host:port from URL
+		if u.Port() != "" {
+			parsedAddr = fmt.Sprintf("%s:%s", u.Hostname(), u.Port())
+		} else {
+			parsedAddr = u.Hostname() + ":6379" // Default Redis port
+		}
+	}
+
+	return &RedisStore{Addr: parsedAddr}
 }
 
 // SetRoomServer maps a room ID to a backend server name (no TTL).
