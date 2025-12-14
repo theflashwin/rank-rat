@@ -4,14 +4,31 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"math"
 	"net/http"
+	"os"
 	"time"
 )
 
-var gameServers map[string]string = map[string]string{
-	"localhost:4000": "server1",
-	"localhost:8000": "server2",
+var gameServers map[string]string
+
+func init() {
+	server1Addr := os.Getenv("SERVER1_ADDRESS")
+	server2Addr := os.Getenv("SERVER2_ADDRESS")
+
+	if server1Addr == "" {
+		log.Fatal("[sink] [traffic_discovery] SERVER1_ADDRESS environment variable is required")
+	}
+
+	if server2Addr == "" {
+		log.Fatal("[sink] [traffic_discovery] SERVER2_ADDRESS environment variable is required")
+	}
+
+	gameServers = map[string]string{
+		server1Addr: "server1",
+		server2Addr: "server2",
+	}
 }
 
 var ServerNotFound error = errors.New("[sink] [traffic discovery] could not get traffic of other servers")
