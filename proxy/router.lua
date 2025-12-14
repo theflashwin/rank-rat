@@ -1,18 +1,13 @@
 --
 --  router.lua (production)
---
---  Routes WebSocket connections based on room_id in URL path:
---      /ws/<room_id>
---
---  Looks up Redis key: room:<room_id> → backend name
--- 
---  Routes all other routes to sink server
+--  Routes WebSocket connections based on room_id via Local Redis Bridge
 --
 
-local redis_host = "red-d4v3gdre5dus73a6bke0"
+-- Connect to the local HAProxy bridge defined in haproxy.cfg
+local redis_host = "127.0.0.1"
 local redis_port = "6379"
 
--- 100ms local cache to avoid Redis hammering during reconnect storms
+-- 100ms local cache to avoid Redis hammering
 local cache = {}
 
 local function log(txn, msg)
@@ -21,15 +16,16 @@ local function log(txn, msg)
     end
 end
 
--- Read Redis GET(room:<id>) using HAProxy TCP API
+-- Read Redis GET(room:<id>)
 local function redis_get(room_id)
     local sock = core.tcp()
 
-    -- TODO: figure out why this isn't working
-    -- sock:settimeout("connect", 200)
-    -- sock:settimeout("receive", 200)
-    -- sock:settimeout("send", 200)
+    -- Timeouts are safe now that we are connecting to localhost
+    sock:settimeout("connect", 200)
+    sock:settimeout("receive", 200)
+    sock:settimeout("send", 200)
 
+    -- Connect to local bridge
     if not sock:connect(redis_host, redis_port) then
         return nil
     end
@@ -39,49 +35,54 @@ local function redis_get(room_id)
     sock:send(cmd)
 
     local line = sock:receive("*l")
-    if not line then return nil end
+    if not line then 
+        sock:close()
+        return nil 
+    end
 
     if line:sub(1,1) == "$" then
         local len = tonumber(line:sub(2))
-        if len == -1 then return nil end
+        if len == -1 then 
+            sock:close()
+            return nil 
+        end
         local data = sock:receive(len)
-        sock:receive(2) -- CRLF
+        sock:receive(2) -- Consume CRLF
+        sock:close()
         return data
     end
 
+    sock:close()
     return nil
 end
 
--- Main entry point for HAProxy
+-- Main entry point
 core.register_action("route_ws", {"http-req"}, function(txn)
     local path = txn.sf:path()
-    log(txn, "[route_ws] handling path " .. path)
-
-    -- Extract room_id from "/ws/<alphanumeric>"
+    
+    -- Extract room_id
     local room_id = path:match("^/ws/([%w]+)$")
 
     if not room_id then
-        -- non /ws/ path, fallback to sink server (server0)
         log(txn, "[route_ws] non ws path, routing to server0")
         txn:set_var("txn.backend_name", "server0")
         return
     end
 
-    -- Check cache first
+    -- Check cache
     local now = core.now()
     local now_ms = (now.sec * 1000) + math.floor(now.usec / 1000)
     local cached = cache[room_id]
     if cached and cached.expiry > now_ms then
-        log(txn, string.format("[route_ws] cache hit for room %s -> %s", room_id, cached.backend))
+        log(txn, string.format("[route_ws] cache hit %s -> %s", room_id, cached.backend))
         txn:set_var("txn.backend_name", cached.backend)
         return
     end
 
-    -- Query Redis
+    -- Query Redis (via bridge)
     local backend = redis_get(room_id) or "server0"
-    log(txn, string.format("[route_ws] cache miss for room %s, selected %s", room_id, backend))
-
-    -- Cache for 10000ms (10 s)
+    
+    -- Cache for 10s
     local ttl = 10000
     cache[room_id] = {
         backend = backend,
