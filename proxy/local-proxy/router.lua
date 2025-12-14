@@ -1,15 +1,13 @@
 --
---  router.lua (production)
+--  ws_router.lua
 --
 --  Routes WebSocket connections based on room_id in URL path:
 --      /ws/<room_id>
 --
 --  Looks up Redis key: room:<room_id> → backend name
--- 
---  Routes all other routes to sink server
 --
 
-local redis_host = "game-map.internal"
+local redis_host = "127.0.1"
 local redis_port = 6379
 
 -- 100ms local cache to avoid Redis hammering during reconnect storms
@@ -24,12 +22,6 @@ end
 -- Read Redis GET(room:<id>) using HAProxy TCP API
 local function redis_get(room_id)
     local sock = core.tcp()
-
-    sock:settimeout(200)
-    sock:settimeout("connect", 200)
-    sock:settimeout("receive", 200)
-    sock:settimeout("send", 200)
-
     if not sock:connect(redis_host, redis_port) then
         return nil
     end
