@@ -10,7 +10,7 @@
 --
 
 local redis_host = "red-d4v3gdre5dus73a6bke0"
-local redis_port = 6379
+local redis_port = "6379"
 
 -- 100ms local cache to avoid Redis hammering during reconnect storms
 local cache = {}
