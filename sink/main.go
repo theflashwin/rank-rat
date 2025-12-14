@@ -39,8 +39,12 @@ func main() {
 
 	mux := http.NewServeMux()
 
-	// Get configuration from environment variables with defaults
-	redis_conn_string := getEnv("REDIS_CONN_STRING", "127.0.0.1:6379")
+	// Get configuration from environment variables
+	redis_conn_string := os.Getenv("REDIS_CONN_STRING")
+	if redis_conn_string == "" {
+		log.Fatalf("[sink] REDIS_CONN_STRING environment variable is required")
+	}
+
 	postgres_conn_string := getEnv("POSTGRES_CONN_STRING", "postgres://dev:dev@localhost:5432/devdb?sslmode=disable")
 
 	// create db connection

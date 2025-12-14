@@ -15,7 +15,7 @@ type RedisStore struct {
 
 func NewRedisStore(addr string) *RedisStore {
 	if strings.TrimSpace(addr) == "" {
-		addr = "127.0.0.1:6379"
+		panic("Redis address cannot be empty")
 	}
 	return &RedisStore{Addr: addr}
 }
