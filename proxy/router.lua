@@ -30,7 +30,7 @@ local function redis_get(room_id)
     -- sock:settimeout("receive", 200)
     -- sock:settimeout("send", 200)
 
-    if not sock:connect(redis_host .. ":" .. redis_port) then
+    if not sock:connect(redis_host, redis_port) then
         return nil
     end
 
