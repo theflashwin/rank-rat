@@ -1,0 +1,95 @@
+import React, { createContext, useContext, useState, ReactNode } from "react";
+import axios from 'axios'
+import { Game } from "../types/gameTypes";
+import { API_BASE_URL } from "../constants/createGameConstants";
+
+interface GameContextType {
+    game: Game | null;
+    loading: boolean;
+    error: string | null;
+    currentRoomId: string | null;
+    fetchGame: (gameId: string) => Promise<void>;
+    clearGame: () => void;
+}
+
+const GameContext = createContext<GameContextType | undefined>(undefined);
+
+export const useGame = () => {
+
+    const context = useContext(GameContext);
+
+    if (context === undefined) {
+        throw new Error('useGame must be used within a GameProvider')
+    }
+
+    return context
+
+}
+
+interface GameProviderProps {
+    children: ReactNode
+}
+
+export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
+
+    const [game, setGame] = useState<Game | null>(null);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const [currentRoomId, setCurrentRoomId] = useState<string | null>(null);
+
+    const fetchGame = async (gameId: string) => {
+        if (!gameId) {
+            setError("Game ID is required");
+            return;
+        }
+
+        if (game && currentRoomId === gameId && game.ID === gameId) {
+            return;
+        }
+
+        setLoading(true);
+        setError(null);
+
+        try {
+            const response = await axios.get(`${API_BASE_URL}/fetch-game/${gameId}`);
+            
+            if (response.data.status === 'ok' && response.data.data) {
+                setGame(response.data.data);
+                setCurrentRoomId(gameId);
+            } else {
+                throw new Error('Invalid response format');
+            }
+        } catch (err) {
+            if (axios.isAxiosError(err)) {
+                if (err.response?.status === 404) {
+                    setError('Game not found');
+                } else {
+                    setError(err.response?.data?.message || err.message || 'Failed to fetch game');
+                }
+            } else {
+                setError(err instanceof Error ? err.message : 'Unknown error occurred');
+            }
+            setGame(null);
+            setCurrentRoomId(null);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const clearGame = () => {
+        setGame(null)
+        setError(null)
+        setCurrentRoomId(null)
+    }
+
+    const value: GameContextType = {
+        game,
+        loading,
+        error,
+        currentRoomId,
+        fetchGame,
+        clearGame
+    }
+
+    return <GameContext.Provider value={value}>{children}</GameContext.Provider>
+}

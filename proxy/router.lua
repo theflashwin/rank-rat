@@ -49,13 +49,13 @@ core.register_action("route_ws", {"http-req"}, function(txn)
     local path = txn.sf:path()
     log(txn, "[route_ws] handling path " .. path)
 
-    -- Extract room_id from "/ws/<digits>"
-    local room_id = path:match("^/ws/(%d+)$")
+    -- Extract room_id from "/ws/<alphanumeric>"
+    local room_id = path:match("^/ws/([%w]+)$")
 
     if not room_id then
-        -- invalid path, fallback to server1
-        log(txn, "[route_ws] invalid path, routing to server1")
-        txn:set_var("txn.backend_name", "server1")
+        -- non /ws/ path, fallback to sink server (server0)
+        log(txn, "[route_ws] non ws path, routing to server0")
+        txn:set_var("txn.backend_name", "server0")
         return
     end
 
@@ -70,7 +70,7 @@ core.register_action("route_ws", {"http-req"}, function(txn)
     end
 
     -- Query Redis
-    local backend = redis_get(room_id) or "server1"
+    local backend = redis_get(room_id) or "server0"
     log(txn, string.format("[route_ws] cache miss for room %s, selected %s", room_id, backend))
 
     -- Cache for 10000ms (10 s)

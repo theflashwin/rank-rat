@@ -5,3 +5,9 @@
 
 **Don't Log**
 `haproxy -f proxy/haproxy.cfg`
+
+## Server
+
+**Server**
+
+`go run server.go -port ${PORT}`
