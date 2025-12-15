@@ -91,6 +91,9 @@ core.register_action("route_ws", {"http-req"}, function(txn)
         return
     end
 
+    -- Convert room_id to lowercase before handling any logic
+    room_id = string.lower(room_id)
+
     -- Cache Check
     local now = core.now()
     local now_ms = (now.sec * 1000) + math.floor(now.usec / 1000)

@@ -57,6 +57,9 @@ export default function Game() {
   const { room_id: roomId } = useParams();
   const navigate = useNavigate();
 
+  // Normalize roomId to uppercase to accept both lowercase and uppercase
+  const normalizedRoomId = roomId ? roomId.toLowerCase() : null;
+
   const [round, setRound] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -76,18 +79,18 @@ export default function Game() {
 
   const question = round?.question ?? "";
   const players = useMemo(() => round?.candidates ?? [], [round]);
-  const currentGameId = round?.gameId ?? roomId ?? "";
+  const currentGameId = round?.gameId ?? normalizedRoomId ?? "";
   const currentQuestionId = round?.questionId ?? 0;
 
   const connect = useCallback(function connectSocket() {
-    if (!roomId) {
+    if (!normalizedRoomId) {
       setError("Missing room id in the route.");
       setIsLoading(false);
       setConnectionState("error");
       return;
     }
 
-    const wsUrl = buildWsUrl(roomId);
+    const wsUrl = buildWsUrl(normalizedRoomId);
     if (!wsUrl) {
       setError("Unable to derive websocket URL. Set VITE_WS_BASE_URL.");
       setIsLoading(false);
@@ -119,7 +122,7 @@ export default function Game() {
     ws.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data);
-        const normalized = normalizeRound(data, roomId);
+        const normalized = normalizeRound(data, normalizedRoomId);
 
         if (!normalized.questionId || normalized.candidates.length === 0) {
           setError("Server sent an incomplete round. Waiting for the next one...");
@@ -175,7 +178,7 @@ export default function Game() {
         }, RECONNECT_DELAY_MS);
       }
     };
-  }, [roomId]);
+  }, [normalizedRoomId]);
 
   const submitResultAfterFly = useCallback(() => {
     if (!selectedWinner || !round) {
@@ -231,8 +234,8 @@ export default function Game() {
 
   useEffect(() => {
     if (!error) return;
-    navigate("/error", { replace: true, state: { message: error, roomId } });
-  }, [error, navigate, roomId]);
+    navigate("/error", { replace: true, state: { message: error, roomId: normalizedRoomId } });
+  }, [error, navigate, normalizedRoomId]);
 
   useEffect(() => {
     if (!selectedWinner) return;

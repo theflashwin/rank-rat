@@ -8,11 +8,14 @@ export default function Leaderboard() {
     const { room_id: roomId } = useParams();
     const { game, loading, error, fetchGame } = useGame();
 
+    // Normalize roomId to uppercase to accept both lowercase and uppercase
+    const normalizedRoomId = roomId ? roomId.toUpperCase() : null;
+
     useEffect(() => {
-        if (roomId) {
-            fetchGame(roomId);
+        if (normalizedRoomId) {
+            fetchGame(normalizedRoomId);
         }
-    }, [roomId, fetchGame]);
+    }, [normalizedRoomId, fetchGame]);
 
     if (loading) {
         return <Loader message="Loading game data..." />;
@@ -57,7 +60,7 @@ export default function Leaderboard() {
                             {game.Questions.map((question, index) => (
                                 <Link
                                     key={question.ID}
-                                    to={`/leaderboard/${roomId}/${question.ID}`}
+                                    to={`/leaderboard/${normalizedRoomId}/${question.ID}`}
                                     className="
                                         group
                                         relative

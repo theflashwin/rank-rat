@@ -44,13 +44,16 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
             return;
         }
 
+        // Normalize gameId to uppercase for case-insensitive lookup
+        const normalizedGameId = gameId.toUpperCase();
+
         // Don't refetch if we already have the game for this room_id
-        if (game && currentRoomId === gameId && game.ID === gameId) {
+        if (game && currentRoomId === normalizedGameId && game.ID === normalizedGameId) {
             return;
         }
 
         // Don't refetch if we already failed for this room_id (prevents infinite loops)
-        if (failedRoomId === gameId) {
+        if (failedRoomId === normalizedGameId) {
             return;
         }
 
@@ -58,11 +61,11 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
         setError(null);
 
         try {
-            const response = await axios.get(`${API_BASE_URL}/fetch-game/${gameId}`);
+            const response = await axios.get(`${API_BASE_URL}/fetch-game/${normalizedGameId}`);
             
             if (response.data.status === 'ok' && response.data.data) {
                 setGame(response.data.data);
-                setCurrentRoomId(gameId);
+                setCurrentRoomId(normalizedGameId);
                 setFailedRoomId(null); // Clear failed state on success
             } else {
                 throw new Error('Invalid response format');
@@ -79,7 +82,7 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
             }
             setGame(null);
             setCurrentRoomId(null);
-            setFailedRoomId(gameId); // Remember which room_id failed
+            setFailedRoomId(normalizedGameId); // Remember which room_id failed
         } finally {
             setLoading(false);
         }

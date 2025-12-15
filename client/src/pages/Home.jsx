@@ -68,13 +68,13 @@ export default function Home() {
     w-72
   "
                             value={roomCode}
-                            onChange={(event) => setRoomCode(event.target.value.toLowerCase())}
+                            onChange={(event) => setRoomCode(event.target.value.toUpperCase())}
                         />
 
 
                         <button
                             onClick={() => {
-                                const normalizedCode = roomCode.trim();
+                                const normalizedCode = roomCode.trim().toUpperCase();
                                 if (!normalizedCode) {
                                     return;
                                 }
