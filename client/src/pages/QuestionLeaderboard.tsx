@@ -56,9 +56,7 @@ export default function QuestionLeaderboard() {
         return <ErrorState message={error} />;
     }
 
-    if (!game || !Number.isFinite(questionId)) {
-        console.log(game)
-        console.log(q_id)
+    if (!game) {
         return (
             <div className="relative w-full min-h-screen overflow-hidden pt-16 md:pt-20">
                 <div className="relative z-10 flex items-center justify-center min-h-screen">
@@ -68,6 +66,15 @@ export default function QuestionLeaderboard() {
                 </div>
             </div>
         );
+    }
+
+    if (!Number.isFinite(questionId)) {
+        return <ErrorState message="Invalid question ID." />;
+    }
+
+    // Check if question exists in the game
+    if (!question) {
+        return <ErrorState message="Question ID does not exist in the game." />;
     }
 
     return (
