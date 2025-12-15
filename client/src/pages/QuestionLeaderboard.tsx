@@ -1,19 +1,29 @@
 import React, { useEffect, useMemo } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useNavigate } from "react-router-dom";
 import { useGame } from "../contexts/GameContext";
 import Loader from "../components/Loader";
 import ErrorState from "../components/ErrorState";
 
 export default function QuestionLeaderboard() {
     const { room_id, q_id } = useParams();
-    const roomId = room_id;
+    const navigate = useNavigate();
     const { game, loading, error, fetchGame } = useGame();
 
+    // Normalize roomId to lowercase to accept both lowercase and uppercase
+    const normalizedRoomId = room_id ? room_id.toLowerCase() : null;
+
+    // Update URL to lowercase if it's not already
     useEffect(() => {
-        if (roomId) {
-            fetchGame(roomId);
+        if (room_id && room_id !== normalizedRoomId) {
+            navigate(`/leaderboard/${normalizedRoomId}/${q_id}`, { replace: true });
         }
-    }, [roomId, fetchGame]);
+    }, [room_id, normalizedRoomId, q_id, navigate]);
+
+    useEffect(() => {
+        if (normalizedRoomId) {
+            fetchGame(normalizedRoomId);
+        }
+    }, [normalizedRoomId, fetchGame]);
 
     const questionId = useMemo(() => Number(q_id), [q_id]);
     const question = useMemo(
@@ -119,7 +129,7 @@ export default function QuestionLeaderboard() {
 
                     <div className="flex justify-center">
                         <Link
-                            to={`/leaderboard/${roomId}`}
+                            to={`/leaderboard/${normalizedRoomId}`}
                             className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/15 text-white font-semibold border border-white/20 hover:bg-white/25 transition"
                         >
                             ← Back to questions

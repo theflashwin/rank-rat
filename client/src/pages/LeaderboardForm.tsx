@@ -7,7 +7,7 @@ export default function LeaderboardForm() {
 
     const handleSubmit = (event: React.FormEvent) => {
         event.preventDefault();
-        const code = roomCode.trim();
+        const code = roomCode.trim().toLowerCase();
         if (!code) return;
         navigate(`/leaderboard/${encodeURIComponent(code)}`);
     };
@@ -28,9 +28,28 @@ export default function LeaderboardForm() {
                         <input
                             type="text"
                             value={roomCode}
-                            onChange={(e) => setRoomCode(e.target.value)}
+                            onChange={(e) => setRoomCode(e.target.value.toLowerCase())}
                             placeholder="Game code"
-                            className="w-full rounded-2xl border border-white/40 px-4 py-3 text-lg text-white placeholder-white/60 bg-white/10 shadow-sm focus:border-white focus:outline-none focus:ring-2 focus:ring-white/60"
+                            className="
+                                px-6 py-4 
+                                rounded-2xl 
+                                bg-white/90 
+                                text-gray-900 
+                                text-center 
+                                placeholder-gray-400
+                                font-mono 
+                                tracking-[0.4em]
+                                uppercase
+                                text-2xl
+                                focus:outline-none 
+                                focus:ring-4 
+                                focus:ring-blue-300 
+                                border-2
+                                border-transparent
+                                focus:border-blue-500
+                                transition
+                                w-full
+                            "
                         />
                         <button
                             type="submit"

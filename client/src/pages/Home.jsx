@@ -68,13 +68,13 @@ export default function Home() {
     w-72
   "
                             value={roomCode}
-                            onChange={(event) => setRoomCode(event.target.value.toUpperCase())}
+                            onChange={(event) => setRoomCode(event.target.value.toLowerCase())}
                         />
 
 
                         <button
                             onClick={() => {
-                                const normalizedCode = roomCode.trim().toUpperCase();
+                                const normalizedCode = roomCode.trim().toLowerCase();
                                 if (!normalizedCode) {
                                     return;
                                 }
@@ -147,14 +147,14 @@ export default function Home() {
                         {trendingGames.map((gameCard) => (
                             <button
                                 key={gameCard.code}
-                                onClick={() => navigate(`/game/${encodeURIComponent(gameCard.code)}`)}
+                                onClick={() => navigate(`/game/${encodeURIComponent(gameCard.code.toLowerCase())}`)}
                                 className="group relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl shadow-xl transition hover:-translate-y-1 hover:shadow-2xl focus:outline-none"
                             >
                                 <div className="aspect-video w-full overflow-hidden">
                                     <img
                                         src={gameCard.image}
                                         alt={gameCard.title}
-                                        className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+                                        className="h-full w-full object-cover object-center transition duration-500 group-hover:scale-105"
                                     />
                                 </div>
                                 <div className="p-4 flex items-center justify-between text-left text-white">

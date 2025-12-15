@@ -1,15 +1,23 @@
 import React, { useEffect, useMemo } from 'react'
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { useGame } from '../contexts/GameContext';
 import Loader from "../components/Loader";
 import ErrorState from "../components/ErrorState";
 
 export default function Leaderboard() {
     const { room_id: roomId } = useParams();
+    const navigate = useNavigate();
     const { game, loading, error, fetchGame } = useGame();
 
-    // Normalize roomId to uppercase to accept both lowercase and uppercase
-    const normalizedRoomId = roomId ? roomId.toUpperCase() : null;
+    // Normalize roomId to lowercase to accept both lowercase and uppercase
+    const normalizedRoomId = roomId ? roomId.toLowerCase() : null;
+
+    // Update URL to lowercase if it's not already
+    useEffect(() => {
+        if (roomId && roomId !== normalizedRoomId) {
+            navigate(`/leaderboard/${normalizedRoomId}`, { replace: true });
+        }
+    }, [roomId, normalizedRoomId, navigate]);
 
     useEffect(() => {
         if (normalizedRoomId) {

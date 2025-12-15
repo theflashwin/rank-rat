@@ -44,8 +44,8 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
             return;
         }
 
-        // Normalize gameId to uppercase for case-insensitive lookup
-        const normalizedGameId = gameId.toUpperCase();
+        // Normalize gameId to lowercase for case-insensitive lookup
+        const normalizedGameId = gameId.toLowerCase();
 
         // Don't refetch if we already have the game for this room_id
         if (game && currentRoomId === normalizedGameId && game.ID === normalizedGameId) {

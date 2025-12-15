@@ -57,8 +57,15 @@ export default function Game() {
   const { room_id: roomId } = useParams();
   const navigate = useNavigate();
 
-  // Normalize roomId to uppercase to accept both lowercase and uppercase
+  // Normalize roomId to lowercase to accept both lowercase and uppercase
   const normalizedRoomId = roomId ? roomId.toLowerCase() : null;
+
+  // Update URL to lowercase if it's not already
+  useEffect(() => {
+    if (roomId && roomId !== normalizedRoomId) {
+      navigate(`/game/${normalizedRoomId}`, { replace: true });
+    }
+  }, [roomId, normalizedRoomId, navigate]);
 
   const [round, setRound] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
