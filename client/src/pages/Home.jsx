@@ -68,7 +68,7 @@ export default function Home() {
     w-72
   "
                             value={roomCode}
-                            onChange={(event) => setRoomCode(event.target.value.toUpperCase())}
+                            onChange={(event) => setRoomCode(event.target.value.toLowerCase())}
                         />
 
 

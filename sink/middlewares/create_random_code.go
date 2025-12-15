@@ -3,6 +3,7 @@ package middlewares
 import (
 	"crypto/rand"
 	"math/big"
+	"strings"
 )
 
 const (
@@ -28,5 +29,5 @@ func GenerateRandomCode() (string, error) {
 		code[i] = alphanumericChars[charIndex.Int64()]
 	}
 
-	return string(code), nil
+	return strings.ToLower(string(code)), nil
 }

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, ReactNode } from "react";
+import React, { createContext, useContext, useState, useCallback, ReactNode } from "react";
 import axios from 'axios'
 import { Game } from "../types/gameTypes";
 import { API_BASE_URL } from "../constants/createGameConstants";
@@ -36,14 +36,21 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [currentRoomId, setCurrentRoomId] = useState<string | null>(null);
+    const [failedRoomId, setFailedRoomId] = useState<string | null>(null);
 
-    const fetchGame = async (gameId: string) => {
+    const fetchGame = useCallback(async (gameId: string) => {
         if (!gameId) {
             setError("Game ID is required");
             return;
         }
 
+        // Don't refetch if we already have the game for this room_id
         if (game && currentRoomId === gameId && game.ID === gameId) {
+            return;
+        }
+
+        // Don't refetch if we already failed for this room_id (prevents infinite loops)
+        if (failedRoomId === gameId) {
             return;
         }
 
@@ -56,6 +63,7 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
             if (response.data.status === 'ok' && response.data.data) {
                 setGame(response.data.data);
                 setCurrentRoomId(gameId);
+                setFailedRoomId(null); // Clear failed state on success
             } else {
                 throw new Error('Invalid response format');
             }
@@ -71,16 +79,18 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
             }
             setGame(null);
             setCurrentRoomId(null);
+            setFailedRoomId(gameId); // Remember which room_id failed
         } finally {
             setLoading(false);
         }
-    };
+    }, [game, currentRoomId, failedRoomId]);
 
-    const clearGame = () => {
+    const clearGame = useCallback(() => {
         setGame(null)
         setError(null)
         setCurrentRoomId(null)
-    }
+        setFailedRoomId(null)
+    }, [])
 
     const value: GameContextType = {
         game,

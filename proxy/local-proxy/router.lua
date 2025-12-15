@@ -59,6 +59,9 @@ core.register_action("route_ws", {"http-req"}, function(txn)
         return
     end
 
+    -- cleanup room_id
+    room_id = string.lower(room_id)
+
     -- Check cache first
     local now = core.now()
     local now_ms = (now.sec * 1000) + math.floor(now.usec / 1000)

@@ -31,9 +31,11 @@ func DoesGameExist(store *db.GameStore) http.HandlerFunc {
 			http.Error(w, "invalid JSON payload", http.StatusBadRequest)
 			return
 		}
+
 		defer r.Body.Close()
 
 		roomID := strings.TrimSpace(req.RoomID)
+		roomID = strings.ToLower(roomID)
 		if roomID == "" {
 			http.Error(w, "room_id is required", http.StatusBadRequest)
 			return

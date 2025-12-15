@@ -217,6 +217,8 @@ func parseRoomID(path string) (string, error) {
 		return "", fmt.Errorf("invalid room id")
 	}
 
+	roomID = strings.ToLower(roomID)
+
 	return roomID, nil
 }
 

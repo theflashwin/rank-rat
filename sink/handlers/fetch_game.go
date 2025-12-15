@@ -41,6 +41,8 @@ func FetchGameHandler(game_store *db.GameStore, picture_store *db.PictureStore) 
 			return
 		}
 
+		gameID = strings.ToLower(gameID)
+
 		game, err := game_store.GetGame(r.Context(), gameID)
 		if err != nil {
 			if errors.Is(err, db.ErrGameNotFound) {

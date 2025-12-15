@@ -35,6 +35,9 @@ func CreateGameHandler(store *db.GameStore, redis_store *db.RedisStore) http.Han
 		payload.GameName = strings.TrimSpace(payload.GameName)
 		payload.RoomCode = strings.TrimSpace(payload.RoomCode)
 
+		// clean up room code (change to lowercase)
+		payload.RoomCode = strings.ToLower(payload.RoomCode)
+
 		if payload.GameName == "" || payload.RoomCode == "" {
 			http.Error(w, "gameName and roomCode are required", http.StatusBadRequest)
 			return
