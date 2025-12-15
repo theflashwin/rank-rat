@@ -83,6 +83,8 @@ export default function Game() {
   const reconnectTimerRef = useRef();
   const shouldReconnectRef = useRef(true);
   const hasReceivedRoundRef = useRef(false);
+  const connectionStartTimeRef = useRef(null);
+  const errorNavigationTimerRef = useRef(null);
 
   const question = round?.question ?? "";
   const players = useMemo(() => round?.candidates ?? [], [round]);
@@ -110,6 +112,7 @@ export default function Game() {
     }
 
     window.clearTimeout(reconnectTimerRef.current);
+    window.clearTimeout(errorNavigationTimerRef.current);
     hasReceivedRoundRef.current = false;
     setRound(null);
     setSelectedWinner(null);
@@ -118,6 +121,7 @@ export default function Game() {
     setIsLoading(true);
     setError("");
     setConnectionState("connecting");
+    connectionStartTimeRef.current = Date.now();
 
     const ws = new WebSocket(wsUrl);
     socketRef.current = ws;
@@ -158,22 +162,36 @@ export default function Game() {
 
     ws.onerror = (err) => {
       console.log(err);
-      if (!hasReceivedRoundRef.current) {
+      // Don't set error immediately - wait to see if connection establishes
+      const timeSinceStart = connectionStartTimeRef.current ? Date.now() - connectionStartTimeRef.current : 0;
+      if (!hasReceivedRoundRef.current && timeSinceStart > 3000) {
+        // Only error if we've waited at least 3 seconds
         shouldReconnectRef.current = false;
         setError("This game does not exist.");
         setConnectionState("error");
         setIsLoading(false);
-      } else {
+      } else if (hasReceivedRoundRef.current) {
         setError("WebSocket error. Attempting to reconnect...");
       }
     };
 
     ws.onclose = () => {
+      const timeSinceStart = connectionStartTimeRef.current ? Date.now() - connectionStartTimeRef.current : 0;
       if (!hasReceivedRoundRef.current) {
-        shouldReconnectRef.current = false;
-        setConnectionState("error");
-        setIsLoading(false);
-        setError("This game does not exist.");
+        // Only treat as error if connection was open for at least 3 seconds
+        if (timeSinceStart > 3000) {
+          shouldReconnectRef.current = false;
+          setConnectionState("error");
+          setIsLoading(false);
+          setError("This game does not exist.");
+        } else {
+          // Connection closed too quickly, might be temporary - try reconnecting
+          if (shouldReconnectRef.current) {
+            reconnectTimerRef.current = window.setTimeout(() => {
+              connectSocket();
+            }, RECONNECT_DELAY_MS);
+          }
+        }
         return;
       }
 
@@ -232,6 +250,7 @@ export default function Game() {
       window.clearTimeout(titleTimerRef.current);
       window.clearTimeout(submitTimerRef.current);
       window.clearTimeout(reconnectTimerRef.current);
+      window.clearTimeout(errorNavigationTimerRef.current);
 
       if (socketRef.current) {
         socketRef.current.close();
@@ -241,7 +260,20 @@ export default function Game() {
 
   useEffect(() => {
     if (!error) return;
-    navigate("/error", { replace: true, state: { message: error, roomId: normalizedRoomId } });
+    
+    // Only navigate to error page for specific errors, and add a small delay
+    // to prevent immediate navigation on page reload
+    if (error === "This game does not exist.") {
+      errorNavigationTimerRef.current = window.setTimeout(() => {
+        navigate("/error", { replace: true, state: { message: error, roomId: normalizedRoomId } });
+      }, 500); // Small delay to allow connection to establish
+    }
+    
+    return () => {
+      if (errorNavigationTimerRef.current) {
+        window.clearTimeout(errorNavigationTimerRef.current);
+      }
+    };
   }, [error, navigate, normalizedRoomId]);
 
   useEffect(() => {
