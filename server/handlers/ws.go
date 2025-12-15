@@ -458,7 +458,14 @@ func handleConnection(conn *websocket.Conn, game *Game, roomID string, ctx conte
 
 		// handle read errors
 		if err != nil {
-			log.Printf("[handler] read error room=%s: %v", roomID, err)
+			// Check if this is a normal close (not an error)
+			if websocket.IsCloseError(err, websocket.CloseNormalClosure, websocket.CloseGoingAway, websocket.CloseNoStatusReceived) {
+				log.Printf("[handler] client disconnected normally room=%s", roomID)
+			} else if websocket.IsUnexpectedCloseError(err, websocket.CloseNormalClosure, websocket.CloseGoingAway) {
+				log.Printf("[handler] unexpected close room=%s: %v", roomID, err)
+			} else {
+				log.Printf("[handler] read error room=%s: %v", roomID, err)
+			}
 			break
 		}
 
