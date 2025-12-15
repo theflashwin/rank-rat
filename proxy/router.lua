@@ -26,7 +26,7 @@ local function redis_get(txn, room_id)
     -- sock:settimeout("send", 200)
 
     log(txn, "[redis_get] Connecting to bridge " .. redis_host .. ":" .. redis_port)
-    if not sock:connect("redis://red-d4v3gdre5dus73a6bke0:6379") then
+    if not sock:connect(redis_host, redis_port) then
         log(txn, "[redis_get] ERROR: Connection failed")
         return nil
     end
