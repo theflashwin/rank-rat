@@ -85,6 +85,8 @@ export default function Game() {
   const hasReceivedRoundRef = useRef(false);
   const connectionStartTimeRef = useRef(null);
   const errorNavigationTimerRef = useRef(null);
+  const reconnectAttemptsRef = useRef(0);
+  const MAX_RECONNECT_ATTEMPTS = 3;
 
   const question = round?.question ?? "";
   const players = useMemo(() => round?.candidates ?? [], [round]);
@@ -122,6 +124,7 @@ export default function Game() {
     setError("");
     setConnectionState("connecting");
     connectionStartTimeRef.current = Date.now();
+    reconnectAttemptsRef.current = 0;
 
     const ws = new WebSocket(wsUrl);
     socketRef.current = ws;
@@ -164,8 +167,8 @@ export default function Game() {
       console.log(err);
       // Don't set error immediately - wait to see if connection establishes
       const timeSinceStart = connectionStartTimeRef.current ? Date.now() - connectionStartTimeRef.current : 0;
-      if (!hasReceivedRoundRef.current && timeSinceStart > 3000) {
-        // Only error if we've waited at least 3 seconds
+      if (!hasReceivedRoundRef.current && timeSinceStart > 5000) {
+        // Only error if we've waited at least 5 seconds
         shouldReconnectRef.current = false;
         setError("This game does not exist.");
         setConnectionState("error");
@@ -176,31 +179,30 @@ export default function Game() {
     };
 
     ws.onclose = () => {
-      const timeSinceStart = connectionStartTimeRef.current ? Date.now() - connectionStartTimeRef.current : 0;
       if (!hasReceivedRoundRef.current) {
-        // Only treat as error if connection was open for at least 3 seconds
-        if (timeSinceStart > 3000) {
-          shouldReconnectRef.current = false;
-          setConnectionState("error");
-          setIsLoading(false);
-          setError("This game does not exist.");
-        } else {
-          // Connection closed too quickly, might be temporary - try reconnecting
-          if (shouldReconnectRef.current) {
-            reconnectTimerRef.current = window.setTimeout(() => {
-              connectSocket();
-            }, RECONNECT_DELAY_MS);
-          }
-        }
+        // Never received a round - this likely means the game doesn't exist
+        // Don't reconnect if we haven't received a round
+        shouldReconnectRef.current = false;
+        setConnectionState("error");
+        setIsLoading(false);
+        setError("This game does not exist.");
         return;
       }
 
+      // We've received a round before, so try to reconnect
       setConnectionState("closed");
       setIsLoading(true);
-      if (shouldReconnectRef.current) {
+      
+      if (shouldReconnectRef.current && reconnectAttemptsRef.current < MAX_RECONNECT_ATTEMPTS) {
+        reconnectAttemptsRef.current += 1;
         reconnectTimerRef.current = window.setTimeout(() => {
           connectSocket();
         }, RECONNECT_DELAY_MS);
+      } else {
+        // Max reconnect attempts reached
+        shouldReconnectRef.current = false;
+        setError("Connection lost. Please refresh the page.");
+        setIsLoading(false);
       }
     };
   }, [normalizedRoomId]);
